@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>钩子营工具箱 · 搞钱搞流量</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Base ── */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+  background: #fafafa;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #1d1d1f;
+}
+
+/* ── Header ── */
+header {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.logo { display: flex; flex-direction: column; gap: 1px; }
+.logo-main { font-weight: 700; font-size: 15px; color: #1d1d1f; }
+.logo-main span { color: #F5A623; }
+.logo-sub { font-size: 11px; color: #aaa; }
+.settings-btn {
+  background: none; border: 1px solid #e5e5ea; border-radius: 8px;
+  padding: 5px 13px; font-size: 13px; color: #86868b; cursor: pointer;
+  transition: all .15s; font-family: inherit;
+}
+.settings-btn:hover { border-color: #F5A623; color: #F5A623; }
+
+/* ── Tabs ── */
+.tabs {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+.tab {
+  padding: 13px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #86868b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  letter-spacing: -.01em;
+}
+.tab:hover { color: #1d1d1f; }
+.tab.active { color: #F5A623; border-bottom-color: #F5A623; }
+
+/* ── Main layout ── */
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  gap: 12px;
+  overflow: hidden;
+}
+.panel-left  { background: #fff; border-right: 1px solid #f0f0f0; }
+.panel-right { background: #fafafa; }
+
+.panel-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #86868b;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* ── Textarea ── */
+textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid #e5e5ea;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #1d1d1f;
+  background: #fafafa;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+textarea:focus {
+  outline: none;
+  border-color: #F5A623;
+  box-shadow: 0 0 0 3px rgba(245,166,35,.12);
+  background: #fff;
+}
+textarea::placeholder { color: #c7c7cc; }
+
+/* ── Generate button ── */
+.generate-btn {
+  height: 46px;
+  border-radius: 12px;
+  border: none;
+  background: #F5A623;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(245,166,35,.35);
+  font-family: inherit;
+  letter-spacing: -.01em;
+}
+.generate-btn:hover { background: #e6991a; box-shadow: 0 4px 12px rgba(245,166,35,.4); }
+.generate-btn:active { transform: scale(.98); }
+.generate-btn:disabled { background: #d2d2d7; box-shadow: none; cursor: not-allowed; }
+
+/* ── Output ── */
+.output-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.output {
+  flex: 1;
+  border: 1px solid #e5e5ea;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: #1d1d1f;
+  background: #fff;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.output.empty {
+  display: flex; align-items: center; justify-content: center;
+  color: #c7c7cc; font-size: 13px;
+}
+
+/* buttons row */
+.btn-row { display: flex; gap: 6px; }
+.copy-btn {
+  background: #fff; border: 1px solid #e5e5ea; border-radius: 8px;
+  padding: 5px 12px; font-size: 12px; color: #86868b; cursor: pointer;
+  transition: all .15s; font-family: inherit;
+}
+.copy-btn:hover { border-color: #F5A623; color: #F5A623; }
+
+/* ── Streaming cursor ── */
+.streaming::after { content: '▋'; animation: blink .6s infinite; color: #F5A623; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── Modal ── */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.4); z-index: 100;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.modal-backdrop.show { display: flex; }
+.modal {
+  background: #fff; border-radius: 18px; padding: 28px;
+  width: 400px; max-width: calc(100vw - 40px);
+  box-shadow: 0 24px 64px rgba(0,0,0,.14);
+}
+.modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 18px; letter-spacing: -.02em; }
+.field-group { margin-bottom: 14px; }
+.field-group label { display: block; font-size: 11px; font-weight: 600; color: #86868b; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.field-group input, .field-group select {
+  width: 100%; padding: 9px 12px; border: 1px solid #e5e5ea;
+  border-radius: 10px; font-size: 14px; font-family: inherit; color: #1d1d1f;
+  background: #fafafa; transition: border-color .15s, box-shadow .15s;
+}
+.field-group input:focus, .field-group select:focus {
+  outline: none; border-color: #F5A623; box-shadow: 0 0 0 3px rgba(245,166,35,.12); background: #fff;
+}
+.modal-tip { font-size: 12px; color: #aaa; margin-top: 5px; }
+.modal-footer { display: flex; gap: 8px; margin-top: 22px; }
+.btn-save {
+  flex: 1; height: 42px; border: none; border-radius: 10px;
+  background: #F5A623; color: #fff; font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  box-shadow: 0 2px 8px rgba(245,166,35,.35);
+  transition: background .15s;
+}
+.btn-save:hover { background: #e6991a; }
+.btn-cancel {
+  flex: 1; height: 42px; border: 1px solid #e5e5ea; border-radius: 10px;
+  background: #fff; font-size: 14px; color: #86868b; cursor: pointer; font-family: inherit;
+  transition: background .15s;
+}
+.btn-cancel:hover { background: #f5f5f7; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1d1d1f; color: #fff; padding: 9px 20px;
+  border-radius: 99px; font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 200;
+}
+#toast.show { opacity: 1; }
+
+/* ── Spinner ── */
+.spin { animation: spin .8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Print / PDF ── */
+@media print {
+  header, .tabs, .panel-left, .settings-btn, .copy-btn, .pdf-btn { display: none !important; }
+  body { background: #fff; height: auto; }
+  .main { display: block; }
+  .panel-right { padding: 0; }
+  .output {
+    border: none; box-shadow: none;
+    font-size: 13px; line-height: 1.9;
+    max-height: none; overflow: visible;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .print-header { display: block !important; }
+}
+.print-header {
+  display: none; margin-bottom: 20px;
+  border-bottom: 2px solid #F5A623; padding-bottom: 12px;
+}
+.print-header h2 { font-size: 18px; margin-bottom: 4px; }
+.print-header p  { font-size: 12px; color: #86868b; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-main">🪝 <span>钩子营工具箱</span></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="title">🎯 引流标题</div>
+  <div class="tab" data-tab="sales">🎪 谈单回旋镖</div>
+  <div class="tab" data-tab="rewrite">✍️ 内容加钩子</div>
+</div>
+
+<div class="main">
+  <!-- LEFT -->
+  <div class="panel panel-left">
+    <div class="panel-label" id="left-label">粘贴你的内容，AI 帮你生成吸引人的标题</div>
+    <textarea id="input-box" placeholder="把内容粘贴到这里…"></textarea>
+    <button class="generate-btn" id="gen-btn" onclick="generate()">
+      <span id="btn-text">生成</span>
+    </button>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel panel-right">
+    <div class="output-header">
+      <div class="panel-label">生成结果</div>
+      <div class="btn-row">
+        <button class="copy-btn" onclick="copyOutput()">复制</button>
+        <button class="copy-btn pdf-btn" onclick="downloadPDF()">下载 PDF</button>
+      </div>
+    </div>
+    <div class="print-header">
+      <h2>🪝 钩子营工具箱 · <span id="print-tab-name"></span></h2>
+      <p>生成时间：<span id="print-time"></span></p>
+    </div>
+    <div class="output empty" id="output">等待生成…</div>
+  </div>
+</div>
+
+
+<div id="toast"></div>
+
+<script>
+// ─── Config ───────────────────────────────────────────
+const API_KEY = 'sk-s32x3JETsnsisEWG3e01Ee94B7Ba464fB7E830Fc41Ea2899'
+const API_URL = 'https://api.hardon.work/v1/messages'
+const MODEL   = 'claude-3-5-sonnet-20241022'
+
+let currentTab = 'title'
+
+// ─── Prompts ──────────────────────────────────────────
+const PROMPTS = {
+  title: {
+    label: '粘贴你的内容，AI 帮你生成吸引人的标题',
+    placeholder: '把内容粘贴进来，或者直接写主题方向，比如：\n\n"我想写一篇关于职场摸鱼被发现怎么办的内容"',
+    system: `你是一名顶级自媒体标题策划师，精通钩子营的引流钩子技术。
+擅长用以下公式写出高点击标题：
+- 搜索型：[痛点场景]？ | [解决方案]，[具体效果]
+- 悬念型：前3个字抓注意力 + 反转 + 利益点
+- 身份认同型：让目标用户看到标题就觉得"这说的是我"
+- 损失厌恶型：不做这件事你会失去什么`,
+    user: (input) => `根据以下内容，生成10条高点击率标题：
+
+${input}
+
+要求：
+1. 每条一行，不要编号，直接输出标题
+2. 覆盖不同风格：搜索型、悬念型、情绪共鸣型各至少2条
+3. 适合小红书/抖音
+4. 标题后用括号标注用了哪个钩子类型
+
+最后给出你最推荐的1条，并说明理由。`,
+  },
+
+  sales: {
+    label: '粘贴客户发给你的话，AI 生成回旋镖话术',
+    placeholder: '直接把客户说的原话粘贴进来，比如：\n\n"你们这个太贵了，我朋友那边同款才500，你们要1200，差太多了"',
+    system: `你是一名顶级销售顾问，精通"谈单回旋镖"——反客为主、无痛成交。
+核心原则：
+1. 绝不主动降价，价格是最后底线
+2. 先共情，让客户感觉被理解
+3. 用反问把球踢回给客户，让客户说出自己的真实顾虑
+4. 制造合理稀缺感，不是硬push
+5. 语气自然，像朋友聊天，不像销售话术`,
+    user: (input) => `客户说了这句话：
+
+"${input}"
+
+请给我：
+
+**【读懂客户】**
+客户真正的顾虑是什么？（背后的心理）
+
+**【第一句回复】**
+怎么开口让客户感觉被理解（不能直接解释/辩解）
+
+**【回旋镖话术】**
+完整的回复内容，要自然口语化，像微信聊天那种
+
+**【如果还是拒绝】**
+备用的B方案怎么说`,
+  },
+
+  rewrite: {
+    label: '粘贴你的内容，AI 帮你加上钩子让完读率更高',
+    placeholder: '把你写好的内容粘贴进来，比如：\n\n"今天分享一个减肥方法，就是少吃多运动，早睡早起，保持心情愉快……"',
+    system: `你是一名顶级内容策划师，精通"内容留白"技术。
+你知道：
+- 开头3秒必须用钩子抓住读者，不然直接划走
+- 每隔2-3段要埋一个"悬念"让人继续看
+- 三应原则：应时（蹭热点）/ 应景（切读者当下处境）/ 应心声（说出读者想说没说的话）
+- 结尾要有行动号召，引导评论/转发/关注`,
+    user: (input) => `原始内容：
+
+${input}
+
+请改写这篇内容，要求：
+1. 开头换成高钩子版本（前2-3句话让人想继续看）
+2. 中间加入至少2处"留白钩"（用悬念/反差/未完成感）
+3. 结尾加上引发互动的句子
+
+改写完后，用一小段话说明你在哪里加了什么钩子，以及为什么。`,
+  },
+}
+
+// ─── Tab switching ─────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+    tab.classList.add('active')
+    currentTab = tab.dataset.tab
+
+    const p = PROMPTS[currentTab]
+    document.getElementById('left-label').textContent = p.label
+    document.getElementById('input-box').placeholder = p.placeholder
+    document.getElementById('input-box').value = ''
+
+    const out = document.getElementById('output')
+    out.textContent = '等待生成…'
+    out.classList.add('empty')
+    out.classList.remove('streaming')
+  })
+})
+
+// ─── Generate ─────────────────────────────────────────
+async function generate() {
+  const input = document.getElementById('input-box').value.trim()
+  if (!input) { toast('请先粘贴内容'); return }
+
+  const p   = PROMPTS[currentTab]
+  const out = document.getElementById('output')
+  out.classList.remove('empty')
+  out.textContent = ''
+  out.classList.add('streaming')
+
+  const btn = document.getElementById('gen-btn')
+  btn.disabled = true
+  document.getElementById('btn-text').innerHTML = '<span class="spin">⟳</span> 生成中…'
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        stream: true,
+        max_tokens: 3000,
+        system: p.system,
+        messages: [{ role: 'user', content: p.user(input) }],
+      }),
+    })
+
+    if (!resp.ok) {
+      const err = await resp.text()
+      out.classList.remove('streaming')
+      out.textContent = `❌ 请求失败 ${resp.status}\n\n${err}`
+      return
+    }
+
+    const reader  = resp.body.getReader()
+    const decoder = new TextDecoder()
+    let buf = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      const lines = buf.split('\n')
+      buf = lines.pop()
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6).trim()
+        try {
+          const json = JSON.parse(data)
+          if (json.type === 'content_block_delta' && json.delta?.type === 'text_delta') {
+            out.textContent += json.delta.text
+          }
+        } catch {}
+      }
+    }
+  } catch (e) {
+    out.textContent = `❌ 网络错误：${e.message}`
+  } finally {
+    out.classList.remove('streaming')
+    btn.disabled = false
+    document.getElementById('btn-text').textContent = '生成'
+  }
+}
+
+// ─── PDF Download ─────────────────────────────────────
+function downloadPDF() {
+  const text = document.getElementById('output').textContent.trim()
+  if (!text || text === '等待生成…') { toast('还没有内容'); return }
+  const tabNames = { title: '引流标题', sales: '谈单回旋镖', rewrite: '内容加钩子' }
+  document.getElementById('print-tab-name').textContent = tabNames[currentTab]
+  document.getElementById('print-time').textContent = new Date().toLocaleString('zh-CN')
+  window.print()
+}
+
+// ─── Copy ──────────────────────────────────────────────
+function copyOutput() {
+  const text = document.getElementById('output').textContent.trim()
+  if (!text || text === '等待生成…') { toast('还没有内容'); return }
+  navigator.clipboard.writeText(text).then(() => toast('✅ 已复制'))
+}
+
+// ─── Toast ────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast')
+  el.textContent = msg
+  el.classList.add('show')
+  setTimeout(() => el.classList.remove('show'), 2200)
+}
+
+</script>
+</body>
+</html>

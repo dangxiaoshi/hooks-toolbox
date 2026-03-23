@@ -1,0 +1,18 @@
+{
+  "name": "hooks-toolbox",
+  "version": "1.0.0",
+  "description": "钩子营工具箱 - 基于Claude API的多功能工具",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve .",
+    "dev": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "claude",
+    "ai",
+    "marketing",
+    "tools"
+  ],
+  "author": "huihuigift-hue",
+  "license": "MIT"
+}
